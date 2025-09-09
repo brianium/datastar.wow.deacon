@@ -10,6 +10,9 @@
   🕊
 </p>
 
+[![Clojars Project](https://img.shields.io/clojars/v/com.github.brianium/datastar.wow.deacon.svg)](https://clojars.org/com.github.brianium/datastar.wow.deacon)
+[![cljdoc badge](https://cljdoc.org/badge/com.github.brianium/datastar.wow.deacon)](https://cljdoc.org/d/com.github.brianium/datastar.wow.deacon)
+
 Adds declarative connection management to a [datastar.wow](https://github.com/brianium/datastar.wow) application. Supports automatic connection storage scoped to global or user contexts.
 
 ## Table of Contents
