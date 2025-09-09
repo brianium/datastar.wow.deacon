@@ -148,8 +148,8 @@
 
 (defn jump
   "Adds a whopping 10 to the counter state - using the same connection established via index"
-  [{{{:keys [store]} :data} ::r/match}]
-  {::d*/connection (d*conn/connection store [::d*conn/id ::counter])
+  [_]
+  {::d*/connection [::d*conn/id ::counter]
    :🚀 [[::d*/patch-signals (swap! *state update :counter #(+ % 10))]]})
 
 (defn subscribe

@@ -74,7 +74,7 @@
    (dispatch store fx opts false))
   ([store fx opts with-open-sse?]
    (let [update-nexus (d*conn/update-nexus store opts)
-         sse      ::test-conn
+         sse      (atom ::test-conn)
          request  {:session-id ::test-id}
          response {::d*conn/name ::test-name}
          dispatch-data
@@ -85,26 +85,27 @@
             {:nexus/effects
              {:datastar.wow/sse-closed (constantly ::closed)
               :datastar.wow/send (constantly ::send)}})]
-     (nexus/dispatch n {:sse sse :request request} dispatch-data fx))))
+     (fn [& [sse-override]]
+       (nexus/dispatch n {:sse (or sse-override sse) :request request} dispatch-data fx)))))
 
 (deftest dispatch-with-connection-interceptor
   (let [store (d*conn/store {:type :atom :atom *conns})]
     (testing "default storage"
-      (dispatch store [[:datastar.wow/send :arg1 :arg2]])
+      ((dispatch store [[:datastar.wow/send :arg1 :arg2]]))
       (is (some? (d*conn/connection store [::d*conn/id ::test-name]))))
     (testing "using an id-fn"
       (let [id-fn (fn [{{:keys [request]} :system}]
                     (:session-id request))]
-        (dispatch store [[:datastar.wow/send :arg1 :arg2]] {:id-fn id-fn})
+        ((dispatch store [[:datastar.wow/send :arg1 :arg2]] {:id-fn id-fn}))
         (is (some? (d*conn/connection store [::test-id ::test-name])))))
     (testing "purging on sse-closed"
-      (dispatch store [[:datastar.wow/send :arg1 :arg2]])
-      (dispatch store [[:datastar.wow/sse-closed]])
+      ((dispatch store [[:datastar.wow/send :arg1 :arg2]]))
+      ((dispatch store [[:datastar.wow/sse-closed]]))
       (is (nil? (d*conn/connection store [::d*conn/id]))))
     (testing "using an on-purge fn"
       (let [*purge   (atom nil)
             on-purge (fn [{{:keys [request]} :system}]
                        (reset! *purge (:session-id request)))]
-        (dispatch store [[:datastar.wow/send :arg1 :arg2]])
-        (dispatch store [[:datastar.wow/sse-closed]] {:on-purge on-purge})
+        ((dispatch store [[:datastar.wow/send :arg1 :arg2]]))
+        ((dispatch store [[:datastar.wow/sse-closed]] {:on-purge on-purge}))
         (is (= ::test-id @*purge))))))
