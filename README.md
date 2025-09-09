@@ -44,12 +44,9 @@ Adds declarative connection management to a [datastar.wow](https://github.com/br
                       [::start-timer]]}))
 					  
 (defn jump
-  "Adds a whopping 10 to the counter state - using the same connection established via index. The store
-   can be accessed any way you see fit - in this example it is stored as route data in a reitit app"
-  [{{{:keys [store]} :data} ::r/match}]
-  ;;; connection names are always scoped to a unique session id - defaulting to ::datastar.wow.deacon/id
-  ;;; this session id can be configured via function so anything is possible
-  {::d*/connection (d*conn/connection store [::d*conn/id ::counter])
+  "Adds a whopping 10 to the counter state - using the same connection established via index"
+  [_]
+  {::d*/connection ::counter ;;; specify the connection to use
    :🚀 [[::d*/patch-signals (swap! *state update :counter #(+ % 10))]]})
 ```
 
@@ -103,13 +100,35 @@ Use `datastar.wow.deacon/update-nexus` to create a function used in `:datastar.w
 
 See [datastar.wow docs](https://github.com/brianium/datastar.wow?tab=readme-ov-file#extending) on extending via `:datastar.wow/update-nexus`.
 
-Once the interceptor has been added, datstar.wow handlers can contain a name key in the response indicating the connection should be stored:
+Once the interceptor has been added, datstar.wow handlers can contain a `:datastar.wow.deacon/name` key in the response indicating the connection should be stored:
 
 ``` clojure
 {::d*conn/name ::counter   ;;; unique connection name signals deacon to store
  ::d*/with-open-sse? false ;;; ::d*/with-open-sse? 
  ::d*/fx [[::subscribe ::index]
           [::start-timer]]}
+```
+
+With the interceptor enabled, the default behavior of `:datastar.wow/connection` is augmented to support vector or keyword references to existing connections.
+
+``` clojure
+(defn jump
+  "Reference an explicit connection scoped by the results of :id-fn"
+  [_]
+  {::d*/connection [::d*conn/id ::counter]
+   :🚀 [[::d*/patch-signals (swap! *state update :counter #(+ % 10))]]})
+   
+(defn jump
+  "Use a keyword that expands to a vector that uses the results of :id-fn"
+  [_]
+  {::d*/connection ::counter
+   :🚀 [[::d*/patch-signals (swap! *state update :counter #(+ % 10))]]})
+   
+(defn jump
+  "Use an explicit connection fetched from the connection store (stored on the request here)"
+  [{:keys [store]}]
+  {::d*/connection (d*conn/connection store [::d*conn/id ::counter])
+   :🚀 [[::d*/patch-signals (swap! *state update :counter #(+ % 10))]]})
 ```
 
 ## Options
