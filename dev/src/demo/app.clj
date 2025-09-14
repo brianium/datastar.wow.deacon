@@ -141,7 +141,7 @@
     :get (let [{:keys [running]} @*state]
            {:body (app running)})
     :delete {:🚀 [[::d*/patch-signals (reset! *state {:running false :counter 0})]]}
-    :put {::d*conn/name ::counter
+    :put {::d*conn/key [::counter 1]
           ::d*/with-open-sse? false
           :🚀 [[::subscribe ::index]
                [::start-timer]]}))
@@ -149,7 +149,7 @@
 (defn jump
   "Adds a whopping 10 to the counter state - using the same connection established via index"
   [_]
-  {::d*/connection [::d*conn/id ::counter]
+  {::d*/connection [::counter 1]
    :🚀 [[::d*/patch-signals (swap! *state update :counter #(+ % 10))]]})
 
 (defn subscribe

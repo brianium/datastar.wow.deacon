@@ -2,11 +2,13 @@
   (:require [datastar.wow.deacon.atom :as deacon.atom]
             [datastar.wow.deacon.protocols :as impl]))
 
-(defn resolve-conn
-  [store k context]
-  (if-some [conn (impl/connection store k)]
+(defn- resolve-conn
+  [store k id]
+  (if-some [conn (impl/connection store [id k])]
     conn
-    (throw (ex-info (format "Connection with k %s does not exist" k) context))))
+    (if-some [conn (impl/connection store k)]
+      conn
+      k)))
 
 (defn create-interceptor
   [store {:keys [id-fn on-purge]
@@ -21,10 +23,9 @@
            store? (not (:datastar.wow/with-open-sse? dispatch-data))
            id     (id-fn ctx)
            cname  (get-in dispatch-data [:datastar.wow/response :datastar.wow.deacon/key])
-           sse    (cond
-                    (keyword? sse) (resolve-conn store [id sse] ctx)
-                    (vector? sse)  (resolve-conn store sse ctx)
-                    :else sse)]
+           sse    (if store?
+                    (resolve-conn store sse id)
+                    sse)]
        (when (and store? id cname (some? sse)) ;;; sse will be nil on close effects
          (impl/store! store [id cname] sse))
        (if (some? sse)
