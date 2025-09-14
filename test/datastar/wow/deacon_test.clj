@@ -76,7 +76,7 @@
    (let [update-nexus (d*conn/update-nexus store opts)
          sse      (atom ::test-conn)
          request  {:session-id ::test-id}
-         response {::d*conn/name ::test-name}
+         response {::d*conn/key ::test-name}
          dispatch-data
          {:datastar.wow/response response
           :datastar.wow/request  request

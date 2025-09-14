@@ -20,7 +20,7 @@
      (let [{:keys [sse]} system
            store? (not (:datastar.wow/with-open-sse? dispatch-data))
            id     (id-fn ctx)
-           cname  (get-in dispatch-data [:datastar.wow/response :datastar.wow.deacon/name])
+           cname  (get-in dispatch-data [:datastar.wow/response :datastar.wow.deacon/key])
            sse    (cond
                     (keyword? sse) (resolve-conn store [id sse] ctx)
                     (vector? sse)  (resolve-conn store sse ctx)
@@ -35,7 +35,7 @@
    (fn [{:keys [effect system dispatch-data] :as ctx}]
      (let [{:keys [request]} system]
        (when (and effect (= :datastar.wow/sse-closed (first effect)))
-         (when-some [cname (get-in dispatch-data [:datastar.wow/response :datastar.wow.deacon/name])]
+         (when-some [cname (get-in dispatch-data [:datastar.wow/response :datastar.wow.deacon/key])]
            (on-purge ctx)
            (impl/purge! store [(id-fn request) cname]))))
      ctx)})
