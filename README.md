@@ -109,7 +109,7 @@ Once the interceptor has been added, datstar.wow handlers can contain a `:datast
           [::start-timer]]}
 ```
 
-With the interceptor enabled, the default behavior of `:datastar.wow/connection` is augmented to support vector or keyword references to existing connections.
+With the interceptor enabled, the default behavior of `:datastar.wow/connection` is augmented to support lookup by the value of `:datastar.wow.deacon/key`:
 
 ``` clojure
 (defn jump
@@ -123,13 +123,22 @@ With the interceptor enabled, the default behavior of `:datastar.wow/connection`
   [_]
   {::d*/connection ::counter
    :🚀 [[::d*/patch-signals (swap! *state update :counter #(+ % 10))]]})
+
+(defn jump
+  "Use a composite key of your own design"
+  [_]
+  {::d*/connection [::counter 1]
+   :🚀 [[::d*/patch-signals (swap! *state update :counter #(+ % 10))]]})
    
+
 (defn jump
   "Use an explicit connection fetched from the connection store (stored on the request here)"
   [{:keys [store]}]
   {::d*/connection (d*conn/connection store [::d*conn/id ::counter])
    :🚀 [[::d*/patch-signals (swap! *state update :counter #(+ % 10))]]})
 ```
+
+The `:datastar.wow.deacon/key` can contain any value that would be appropriate as a key in a Clojure map
 
 ## Options
 
