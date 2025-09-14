@@ -38,7 +38,7 @@ Adds declarative connection management to a [datastar.wow](https://github.com/br
     :get (let [{:keys [running]} @*state]
            {:body (app running)})
     :delete {::d*/fx [[::d*/patch-signals (reset! *state {:running false :counter 0})]]}
-    :put    {::d*conn/name ::counter ;;; unique connection name signals deacon to store
+    :put    {::d*conn/key ::counter ;;; unique connection key signals deacon to store
              ::d*/with-open-sse? false
              ::d*/fx [[::subscribe ::index]
                       [::start-timer]]}))
@@ -100,16 +100,16 @@ Use `datastar.wow.deacon/update-nexus` to create a function used in `:datastar.w
 
 See [datastar.wow docs](https://github.com/brianium/datastar.wow?tab=readme-ov-file#extending) on extending via `:datastar.wow/update-nexus`.
 
-Once the interceptor has been added, datstar.wow handlers can contain a `:datastar.wow.deacon/name` key in the response indicating the connection should be stored:
+Once the interceptor has been added, datstar.wow handlers can contain a `:datastar.wow.deacon/key` key in the response indicating the connection should be stored:
 
 ``` clojure
-{::d*conn/name ::counter   ;;; unique connection name signals deacon to store
+{::d*conn/key ::counter   ;;; unique connection key signals deacon to store
  ::d*/with-open-sse? false ;;; ::d*/with-open-sse? 
  ::d*/fx [[::subscribe ::index]
           [::start-timer]]}
 ```
 
-With the interceptor enabled, the default behavior of `:datastar.wow/connection` is augmented to support vector or keyword references to existing connections.
+With the interceptor enabled, the default behavior of `:datastar.wow/connection` is augmented to support lookup by the value of `:datastar.wow.deacon/key`:
 
 ``` clojure
 (defn jump
@@ -123,7 +123,14 @@ With the interceptor enabled, the default behavior of `:datastar.wow/connection`
   [_]
   {::d*/connection ::counter
    :🚀 [[::d*/patch-signals (swap! *state update :counter #(+ % 10))]]})
+
+(defn jump
+  "Use a composite key of your own design"
+  [_]
+  {::d*/connection [::counter 1]
+   :🚀 [[::d*/patch-signals (swap! *state update :counter #(+ % 10))]]})
    
+
 (defn jump
   "Use an explicit connection fetched from the connection store (stored on the request here)"
   [{:keys [store]}]
@@ -131,18 +138,20 @@ With the interceptor enabled, the default behavior of `:datastar.wow/connection`
    :🚀 [[::d*/patch-signals (swap! *state update :counter #(+ % 10))]]})
 ```
 
+The `:datastar.wow.deacon/key` can contain any value that would be appropriate as a key in a Clojure map
+
 ## Options
 
 The second argument to `datastar.wow.deacon/update-nexus` is an options map that can be used to customize behavior.
 
-| key         | description                                                                                                                                                      |
-| ------------| ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `:id-fn`    | A function that is given the Nexus context and is expected to return a unique id for the session. IDs are used to scope connection names to a particular context |
-| `:on-purge` | A function that is given the Nexus context and is called when a connection is purged in response to a `:datastar.wow/sse-closed` effect                          |
+| key         | description                                                                                                                                                     |
+| ------------| --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `:id-fn`    | A function that is given the Nexus context and is expected to return a unique id for the session. IDs are used to scope connection keys to a particular context |
+| `:on-purge` | A function that is given the Nexus context and is called when a connection is purged in response to a `:datastar.wow/sse-closed` effect                         |
 
 ### Note on ids and `:id-fn`
 
-Connection keys are always scoped to a unique session ID. This id defaults to `:datastar.wow.deacon/id`. However, it is useful to be able to store a connection name per session/user.
+Connection keys are always scoped to a unique session ID. This id defaults to `:datastar.wow.deacon/id`. However, it is useful to be able to store a connection key per session/user.
 The `:id-fn` is the way to support this. The Nexus context contains useful information (like the request) for constructing such a key.
 
 ``` clojure
@@ -151,7 +160,7 @@ The `:id-fn` is the way to support this. The Nexus context contains useful infor
 (def store (d*conn/store {:type :atom}))
 
 (defn user-id
-  "scope connection names to individual users"
+  "scope connection keys to individual users"
   [{{:keys [request]} :system}]
   (:user-id request))
 
