@@ -11,7 +11,29 @@
     (when-some [k (:datastar.wow.deacon/key response)]
       [id k])))
 
+(defn store!
+  "Store the given sse connection and set data for future dispatches"
+  [ctx store k sse]
+  (impl/store! store k sse)
+  (update ctx :dispatch-data assoc :datastar.wow/connection sse))
+
+(defn with-connection
+  "If a connection exists in storage, use it"
+  [ctx store k]
+  (if-some [connection (impl/connection store k)]
+    (assoc-in ctx [:dispatch-data :datastar.wow/connection] connection)
+    ctx))
+
+(defn purge!
+  "Remove a connection from storage and from future dispatches"
+  [ctx store k on-purge]
+  (on-purge ctx)
+  (impl/purge! store k)
+  (update ctx :dispatch-data dissoc :datastar.wow/connection))
+
 (defn create-interceptor
+  "An interceptor that allows opt-in/managed connection persistence and reuse by adding
+   a :datastar.wow.deacon/key value to a datastar.wow response."
   [store {:keys [id-fn on-purge]
           :or   {id-fn    (constantly :datastar.wow.deacon/id)
                  on-purge (constantly nil)}}]
@@ -19,36 +41,23 @@
   {:id :datastar.wow.deacon/connections
 
    :before-dispatch
-   (fn [{:keys [actions] :as ctx}]
-     (if (= :datastar.wow/connection (ffirst actions))
-       (let [k (scoped-key ctx id-fn)]
-         (if-some [connection
-                   (when k
-                     (impl/connection store k))]
-           (assoc-in ctx [:dispatch-data :datastar.wow/connection] connection)
-           ctx))
-       ctx))
-
-   :after-effect
-   (fn [{:keys [effect system dispatch-data] :as ctx}]
-     (let [{:keys [request]} system]
-       (when (and effect (= :datastar.wow/sse-closed (first effect)))
-         (when-some [cname (get-in dispatch-data [:datastar.wow/response :datastar.wow.deacon/key])]
-           (on-purge ctx)
-           (impl/purge! store [(id-fn request) cname]))))
-     ctx)
-
-   :after-dispatch
-   (fn [{{:keys [sse]} :system
+   (fn [{:keys [actions]
+         {:keys [sse]} :system
          {:datastar.wow/keys [connection]
           {:datastar.wow/keys [with-open-sse?]} :datastar.wow/response} :dispatch-data
          :as ctx}]
-     (let [k      (scoped-key ctx id-fn)
-           store? (and (some? k)
-                       (nil? connection)
-                       (not with-open-sse?))]
-       (when store?
-         (impl/store! store k sse))
+     (if-some [k (scoped-key ctx id-fn)]
+       (let [action-ids (->> actions (map first) set)
+             conn?      (action-ids :datastar.wow/connection)
+             purge?     (action-ids :datastar.wow/sse-closed)
+             store?     (and (some? sse)
+                             (nil? connection)
+                             (not with-open-sse?))]
+         (cond
+           conn?    (with-connection ctx store k)
+           purge?   (purge! ctx store k on-purge)
+           store?   (store! ctx store k sse)
+           :else    ctx))
        ctx))})
 
 (defn update-nexus

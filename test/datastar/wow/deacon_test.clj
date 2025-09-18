@@ -74,7 +74,7 @@
    (dispatch store fx opts false))
   ([store fx opts with-open-sse?]
    (let [update-nexus (d*conn/update-nexus store opts)
-         sse      (atom ::test-conn)
+         sse      ::test-conn
          request  {:session-id ::test-id}
          response {::d*conn/key ::test-name}
          dispatch-data
@@ -83,12 +83,17 @@
           :datastar.wow/with-open-sse? with-open-sse?}
          n (update-nexus
             {:nexus/effects
-             {:datastar.wow/connection identity
+             {:datastar.wow/connection (constantly nil)
+              :datastar.wow/close-sse
+              (fn [{:keys [dispatch]} & _]
+                ;;; simulate sse-closed from on-close callback in datastar sdk
+                (dispatch [[:datastar.wow/sse-closed]]))
               :datastar.wow/sse-closed (constantly ::closed)
               :datastar.wow/send (constantly ::send)}})]
      (fn [& [sse-override]]
-       (let [all-fx (into [[:datastar.wow/connection]] fx)]
-         (nexus/dispatch n {:sse (or sse-override sse) :request request} dispatch-data all-fx))))))
+       (comment "This matches datastar.wow's dispatch strategy (separate dispatch for connection)")
+       (nexus/dispatch n {:sse nil :request request} dispatch-data [[:datastar.wow/connection]])
+       (nexus/dispatch n {:sse (or sse-override sse) :request request} dispatch-data (vec fx))))))
 
 (deftest dispatch-with-connection-interceptor
   (let [store (d*conn/store {:type :atom :atom *conns})]
@@ -101,9 +106,17 @@
         ((dispatch store [[:datastar.wow/send :arg1 :arg2]] {:id-fn id-fn}))
         (is (some? (d*conn/connection store [::test-id ::test-name])))))
     (testing "purging on sse-closed"
-      ((dispatch store [[:datastar.wow/send :arg1 :arg2]]))
-      ((dispatch store [[:datastar.wow/sse-closed]]))
-      (is (nil? (d*conn/connection store [::d*conn/id]))))
+      ;;; sse-closed is dispatched by the datastar sdk's on-close handler
+      ;;; we are simulating here in that, a close-sse will always be followed by an sse-closed
+      ((dispatch store [[:datastar.wow/send :arg1 :arg2]
+                        [:datastar.wow/close-sse]]))
+      (is (nil? (d*conn/connection store [::d*conn/id ::test-name]))))
+    (testing "purging when using an id-fn"
+         (let [id-fn (fn [{{:keys [request]} :system}]
+                       (:session-id request))]
+           ((dispatch store [[:datastar.wow/send :arg1 :arg2]
+                             [:datastar.wow/sse-closed]] {:id-fn id-fn}))
+           (is (nil? (d*conn/connection store [::test-id ::test-name])))))
     (testing "using an on-purge fn"
       (let [*purge   (atom nil)
             on-purge (fn [{{:keys [request]} :system}]

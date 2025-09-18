@@ -28,25 +28,45 @@
     :counter  0}))
 
 (def effects
-  {::subscribe
-   (fn [{:keys [dispatch]} _ k]
-     (add-watch
-      *state k
-      (fn [_ _ _ state]
-        (dispatch [[::d*/patch-signals state]]))))
-   
+  {::reset
+   (fn [{:keys [dispatch]} _ & fx]
+     (dispatch (vec fx) (reset! *state {:running false :counter 0}))
+     nil)
+
    ::start-timer
-   (fn [_ _]
+   ;;; dispatch the given effects after state is updated
+   (fn [{:keys [dispatch]} _ & fx]
      (when-not (:running @*state)
        (swap! *state assoc :running true)
-       (while (:running @*state)
-         (swap! *state update :counter inc)
-         (Thread/sleep 1000))))
+       (future
+         (while (:running @*state)
+           (dispatch (vec fx) (swap! *state update :counter inc))
+           (Thread/sleep 1000)))))
 
    ::jump
    (fn [{:keys [dispatch]} & _]
      (dispatch [[::d*/patch-signals (merge (swap! *state update :counter #(+ % 10))
-                                           {:jumped (random-uuid)})]]))})
+                                           {:jumped (random-uuid)})]])
+     nil)})
+
+(def placeholders
+  {:timer/state ;;; let's use a placeholder to avoid directly dereffing the state atom
+   (fn [state]
+     (if (every? #(contains? state %) [:running :counter])
+       (select-keys state [:running :counter])
+       [:timer/state]))})
+
+(def logger
+  {:id ::error-logger
+   :after-effect
+   (fn [{:keys [errors effect res] :as ctx}]
+     (if (seq errors)
+       (println "⚠️  Errors while handling" (pr-str (first effect)) ":" (pr-str errors))
+       (do
+         (println "✓ Successfully handled" (pr-str (first effect)))
+         (when (and (= (first effect) :datastar.wow/send) (false? res))
+           (println "! Sent on closed channel"))))
+     ctx)})
 
 (defn update-nexus
   "Adds some application specific effects to demonstrate reusing connections.
@@ -56,7 +76,9 @@
    - ::subscribe - adds a watch to the atom to update signals. currently only supports a start then refresh scenario or start then open new tab scenario
    - ::start-timer - increments state every second and dispatches the changes"
   [n]
-  (update n :nexus/effects merge effects))
+  (-> (update n :nexus/effects merge effects)
+      (update :nexus/interceptors (fnil conj []) logger)
+      (update :nexus/placeholders merge placeholders)))
 
 (defn with-datastar
   "datastar.wow/with-datastar component so we can tweak config in the demo app. If using
@@ -108,8 +130,7 @@
         attrs
         {:class ["text-white text-7xl my-4"]})]))
 
-(defn app
-  [running?]
+(defn app []
   (cc/compile
    [c/doctype-html5
     [:html {:class "bg-slate-900 text-white text-lg" :lang "en"}
@@ -120,8 +141,7 @@
       [:script {:src d*/CDN-url :type "module"}]
       [:script {:src "https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"}]]
      [:body (cond-> {:class ["p-8"]
-                     :data-signals (json/write-json-str @*state)}
-              running? (assoc :data-on-load (d*/sse-get "/subscribe")))
+                     :data-signals (json/write-json-str @*state)})
       [:div {:class ["mx-auto max-w-7xl sm:px-6 lg:px-8"]}
        [:fieldset {:class "text-center"}
         [:legend "Demo"]
@@ -143,13 +163,14 @@
    the index with a running timer will subscribe to those changes"
   [{:keys [request-method]}]
   (case request-method
-    :get (let [{:keys [running]} @*state]
-           {:body (app running)})
-    :delete {:🚀 [[::d*/patch-signals (reset! *state {:running false :counter 0})]]}
+    :get {:body (app)}
+    :delete {::d*conn/key [::counter 1]
+             :🚀 [[::reset
+                   [::d*/patch-signals [:timer/state]]
+                   [::d*/close-sse]]]}
     :put {::d*conn/key [::counter 1]
-          ::d*/with-open-sse? false
-          :🚀 [[::subscribe ::index]
-               [::start-timer]]}))
+          :🚀 [[::start-timer
+                [::d*/patch-signals [:timer/state]]]]}))
 
 (defn jump
   "Adds a whopping 10 to the counter state - using the same connection established via index.
@@ -160,11 +181,6 @@
    :🚀 [[::d*/patch-signals {:handled (random-uuid)}]
         [::jump]]})
 
-(defn subscribe
-  "Subscribe to state changes on a new connection"
-  [_]
-  {:🚀 [[::subscribe ::subscribe]]})
-
 (def routes
   ["" {:store (ig/ref ::connections)}
    ["/" {:name   ::index
@@ -173,7 +189,4 @@
          :put    index}]
    ["/jump"
     {:name ::jump
-     :post jump}]
-   ["/subscribe"
-    {:name ::subscribe
-     :get  subscribe}]])
+     :post jump}]])
