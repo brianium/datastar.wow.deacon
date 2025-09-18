@@ -83,10 +83,12 @@
           :datastar.wow/with-open-sse? with-open-sse?}
          n (update-nexus
             {:nexus/effects
-             {:datastar.wow/sse-closed (constantly ::closed)
+             {:datastar.wow/connection identity
+              :datastar.wow/sse-closed (constantly ::closed)
               :datastar.wow/send (constantly ::send)}})]
      (fn [& [sse-override]]
-       (nexus/dispatch n {:sse (or sse-override sse) :request request} dispatch-data fx)))))
+       (let [all-fx (into [[:datastar.wow/connection]] fx)]
+         (nexus/dispatch n {:sse (or sse-override sse) :request request} dispatch-data all-fx))))))
 
 (deftest dispatch-with-connection-interceptor
   (let [store (d*conn/store {:type :atom :atom *conns})]

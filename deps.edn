@@ -2,7 +2,7 @@
  :deps  {com.github.ben-manes.caffeine/caffeine {:mvn/version "3.2.2"}}
  :aliases
  {:dev {:extra-paths ["dev/src"]
-        :extra-deps  {com.github.brianium/datastar.wow {:mvn/version "1.0.0-RC1-wow0"}
+        :extra-deps  {com.github.brianium/datastar.wow {:mvn/version "1.0.0-RC1-wow2"}
                       dev.data-star.clojure/http-kit   {:mvn/version "1.0.0-RC1"}
                       integrant/integrant              {:mvn/version "0.13.1"}
                       io.github.tonsky/clj-reload      {:mvn/version "0.9.7"}
@@ -19,7 +19,7 @@
           slipset/deps-deploy {:mvn/version "0.2.2"}}
          :ns-default slim.lib
          :exec-args {:lib         com.github.brianium/datastar.wow.deacon
-                     :version     "1.2.0"
+                     :version     "1.3.0"
                      :url         "https://github.com/brianium/datastar.wow.deacon"
                      :description "Adds declarative connection management to datastar.wow applications"
                      :developer   "Brian Scaturro"}}}}
