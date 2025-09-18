@@ -7,7 +7,6 @@
             [dev.onionpancakes.chassis.compiler :as cc]
             [integrant.core :as ig]
             [reitit.coercion.malli :as co]
-            [reitit.core :as r]
             [reitit.ring :as rr]
             [reitit.ring.coercion :as rrc]
             [reitit.ring.middleware.parameters :as rmp]
@@ -35,13 +34,19 @@
       *state k
       (fn [_ _ _ state]
         (dispatch [[::d*/patch-signals state]]))))
+   
    ::start-timer
    (fn [_ _]
      (when-not (:running @*state)
        (swap! *state assoc :running true)
        (while (:running @*state)
          (swap! *state update :counter inc)
-         (Thread/sleep 1000))))})
+         (Thread/sleep 1000))))
+
+   ::jump
+   (fn [{:keys [dispatch]} & _]
+     (dispatch [[::d*/patch-signals (merge (swap! *state update :counter #(+ % 10))
+                                           {:jumped (random-uuid)})]]))})
 
 (defn update-nexus
   "Adds some application specific effects to demonstrate reusing connections.
@@ -147,10 +152,13 @@
                [::start-timer]]}))
 
 (defn jump
-  "Adds a whopping 10 to the counter state - using the same connection established via index"
+  "Adds a whopping 10 to the counter state - using the same connection established via index.
+   Try inspecting the EventStream in chrome dev tools to see both :handled and :jumped come
+   through on the original stream"
   [_]
-  {::d*/connection [::counter 1]
-   :🚀 [[::d*/patch-signals (swap! *state update :counter #(+ % 10))]]})
+  {::d*conn/key [::counter 1]
+   :🚀 [[::d*/patch-signals {:handled (random-uuid)}]
+        [::jump]]})
 
 (defn subscribe
   "Subscribe to state changes on a new connection"

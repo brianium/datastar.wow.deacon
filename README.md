@@ -23,6 +23,7 @@ Adds declarative connection management to a [datastar.wow](https://github.com/br
 - [Options](#options)
 - [Extending](#extending)
 - [Demo](#demo)
+- [Change Log](CHANGELOG.md)
 
 ## Quick Example
 
@@ -49,7 +50,6 @@ Adds declarative connection management to a [datastar.wow](https://github.com/br
   {::d*/connection ::counter ;;; specify the connection to use
    :🚀 [[::d*/patch-signals (swap! *state update :counter #(+ % 10))]]})
 ```
-
 ## Installation
 
 `datastar.wow.deacon` is a companion to [datastar.wow](https://github.com/brianium/datastar.wow) and both must be installed in order to enjoy the power.
@@ -104,37 +104,20 @@ Once the interceptor has been added, datstar.wow handlers can contain a `:datast
 
 ``` clojure
 {::d*conn/key ::counter   ;;; unique connection key signals deacon to store
- ::d*/with-open-sse? false ;;; ::d*/with-open-sse? 
+ ::d*/with-open-sse? false
  ::d*/fx [[::subscribe ::index]
           [::start-timer]]}
 ```
 
-With the interceptor enabled, the default behavior of `:datastar.wow/connection` is augmented to support lookup by the value of `:datastar.wow.deacon/key`:
+The key can be any type that would be a valid key in a Clojure map.
+
+Any handler using the same key will re-use the stored connection.
 
 ``` clojure
 (defn jump
   "Reference an explicit connection scoped by the results of :id-fn"
   [_]
-  {::d*/connection [::d*conn/id ::counter]
-   :🚀 [[::d*/patch-signals (swap! *state update :counter #(+ % 10))]]})
-   
-(defn jump
-  "Use a keyword that expands to a vector that uses the results of :id-fn"
-  [_]
-  {::d*/connection ::counter
-   :🚀 [[::d*/patch-signals (swap! *state update :counter #(+ % 10))]]})
-
-(defn jump
-  "Use a composite key of your own design"
-  [_]
-  {::d*/connection [::counter 1]
-   :🚀 [[::d*/patch-signals (swap! *state update :counter #(+ % 10))]]})
-   
-
-(defn jump
-  "Use an explicit connection fetched from the connection store (stored on the request here)"
-  [{:keys [store]}]
-  {::d*/connection (d*conn/connection store [::d*conn/id ::counter])
+  {::d*conn/key ::counter
    :🚀 [[::d*/patch-signals (swap! *state update :counter #(+ % 10))]]})
 ```
 
