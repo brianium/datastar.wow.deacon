@@ -9,6 +9,8 @@
   (store!   [_ k conn] (.put cache k conn))
   (connection [_ k]    (.getIfPresent cache k))
   (purge!   [_ k]      (.invalidate cache k))
+  (list-keys [_]       (-> (.asMap cache)
+                           (keys)))
 
   Object
   (toString [_]
