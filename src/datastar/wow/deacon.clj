@@ -39,6 +39,12 @@
   [s k]
   (impl/purge! s k))
 
+(defn list-keys
+  "Return a sequence of keys in the store. A key may be present even when a connection is
+   no longer available in storage - always check the result of (connection s k)"
+  [s]
+  (impl/list-keys s))
+
 (defn update-nexus
   "Returns an update-nexus function that can be used with datastar.wow. The following (optional lol) options
    are supported:

@@ -9,7 +9,9 @@
   (connection [_ k]
     (@*atom k))
   (purge! [_ k]
-    (swap! *atom dissoc k)))
+    (swap! *atom dissoc k))
+  (list-keys [_]
+    (keys @*atom)))
 
 (defn store
   ([]

@@ -1,5 +1,13 @@
 # Change Log
 
+## [1.5.0] - 2025-09-19
+
+`ConnectionStore` protocol adds `list-keys` function.
+
+### Added
+
+Can now call `(d*conn/list-keys store)` to get a list of keys in the store.
+
 ## [1.4.0] - 2025-09-18
 
 Interceptor has fixed some issues and been made more performant. Connection closing and resolution is much more reliable with a single :before-dispatch interceptor.

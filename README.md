@@ -80,6 +80,16 @@ a period of inactivity.
 ;;; A caffeine backed store can be created with a :cache key overriding all other settings
 (d*conn/store {:type :caffeine
                :cache (create-a-caffeine-cache-somehow)})
+			   
+;;; Working with stores 
+
+(def store (d*conn/store {:type :atom)))
+
+;;; Look up a connection by key
+(d*conn/connection store :my-key)
+
+;;; List all keys in store
+(d*conn/list-keys store)
 ```
 
 ### Installing the nexus interceptor

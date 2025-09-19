@@ -17,7 +17,8 @@
     (testing "storing a connection"
       (let [conn (d*conn/store! s :test ::conn)]
         (is (and (= conn ::conn)
-                 (= conn (@*conns :test))))))
+                 (= conn (@*conns :test))
+                 (= (d*conn/list-keys s) (list :test))))))
     (testing "getting stored connections"
       (are [stored fetched] (= stored fetched)
         (d*conn/store! s :test ::conn) (d*conn/connection s :test)
@@ -31,7 +32,8 @@
   (let [s (d*conn/store {:type :caffeine})]
     (testing "storing a connection"
       (let [conn (d*conn/store! s :test ::conn)]
-        (is (= conn ::conn))))
+        (is (and (= conn ::conn)
+                 (= (d*conn/list-keys s) (list :test))))))
     (testing "getting stored connections"
       (are [stored fetched] (= stored fetched)
         (d*conn/store! s :test ::conn) (d*conn/connection s :test)
