@@ -68,17 +68,10 @@
            (println "! Sent on closed channel"))))
      ctx)})
 
-(defn update-nexus
-  "Adds some application specific effects to demonstrate reusing connections.
-
-   Effects:
-
-   - ::subscribe - adds a watch to the atom to update signals. currently only supports a start then refresh scenario or start then open new tab scenario
-   - ::start-timer - increments state every second and dispatches the changes"
-  [n]
-  (-> (update n :nexus/effects merge effects)
-      (update :nexus/interceptors (fnil conj []) logger)
-      (update :nexus/placeholders merge placeholders)))
+(def registry
+  {::d*/effects effects
+   ::d*/interceptors [logger]
+   ::d*/placeholders placeholders})
 
 (defn with-datastar
   "datastar.wow/with-datastar component so we can tweak config in the demo app. If using
@@ -92,8 +85,7 @@
       :httpkit2 hk2/->sse-response)
     (-> deps
         (dissoc :type :store)
-        (assoc  :datastar.wow/update-nexus (comp (d*conn/update-nexus store) ;;; we can comp update-nexus functions - so here we are adding connection storage via deacon and some demo specific effects
-                                                 update-nexus)))))
+        (assoc  ::d*/registries [[d*conn/registry store] registry]))))
 
 (defn handler
   [{:keys [router middleware]}]
