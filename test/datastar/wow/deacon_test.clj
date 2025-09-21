@@ -1,7 +1,7 @@
 (ns datastar.wow.deacon-test
   (:require [clojure.test :refer [deftest is testing use-fixtures are]]
-            [datastar.wow.deacon :as d*conn]
-            [nexus.core :as nexus]))
+            [datastar.wow :as d*]
+            [datastar.wow.deacon :as d*conn]))
 
 (def *conns (atom {}))
 
@@ -75,7 +75,14 @@
   ([store fx opts]
    (dispatch store fx opts false))
   ([store fx opts with-open-sse?]
-   (let [update-nexus (d*conn/update-nexus store opts)
+   (let [defaults {::d*/effects
+                   {::d*/connection (constantly nil)
+                    ::d*/close-sse
+                    (fn [{:keys [dispatch]} & _]
+                      (dispatch [[:datastar.wow/sse-closed]]))
+                    ::d*/sse-closed (constantly ::closed)
+                    ::d*/send (constantly ::send)}}
+         registry (d*conn/registry store opts)
          sse      ::test-conn
          request  {:session-id ::test-id}
          response {::d*conn/key ::test-name}
@@ -83,19 +90,11 @@
          {:datastar.wow/response response
           :datastar.wow/request  request
           :datastar.wow/with-open-sse? with-open-sse?}
-         n (update-nexus
-            {:nexus/effects
-             {:datastar.wow/connection (constantly nil)
-              :datastar.wow/close-sse
-              (fn [{:keys [dispatch]} & _]
-                ;;; simulate sse-closed from on-close callback in datastar sdk
-                (dispatch [[:datastar.wow/sse-closed]]))
-              :datastar.wow/sse-closed (constantly ::closed)
-              :datastar.wow/send (constantly ::send)}})]
+         dispatch' (d*/dispatch {::d*/registries [defaults registry]})]
      (fn [& [sse-override]]
        (comment "This matches datastar.wow's dispatch strategy (separate dispatch for connection)")
-       (nexus/dispatch n {:sse nil :request request} dispatch-data [[:datastar.wow/connection]])
-       (nexus/dispatch n {:sse (or sse-override sse) :request request} dispatch-data (vec fx))))))
+       (dispatch' {:sse nil :request request} dispatch-data [[:datastar.wow/connection]])
+       (dispatch' {:sse (or sse-override sse) :request request} dispatch-data (vec fx))))))
 
 (deftest dispatch-with-connection-interceptor
   (let [store (d*conn/store {:type :atom :atom *conns})]

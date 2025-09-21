@@ -2,8 +2,8 @@
  :deps  {com.github.ben-manes.caffeine/caffeine {:mvn/version "3.2.2"}}
  :aliases
  {:dev {:extra-paths ["dev/src"]
-        :extra-deps  {com.github.brianium/datastar.wow {:mvn/version "1.0.0-RC1-wow2"}
-                      dev.data-star.clojure/http-kit   {:mvn/version "1.0.0-RC1"}
+        :extra-deps  {com.github.brianium/datastar.wow {:mvn/version "1.0.0-RC3-wow1"}
+                      dev.data-star.clojure/http-kit   {:mvn/version "1.0.0-RC3"}
                       integrant/integrant              {:mvn/version "0.13.1"}
                       io.github.tonsky/clj-reload      {:mvn/version "0.9.7"}
                       metosin/malli                    {:mvn/version "0.19.1"}
