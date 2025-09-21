@@ -2,6 +2,12 @@
 
 ## [1.5.0] - 2025-09-19
 
+### Breaking changes
+
+deacon is using the new [registry](https://github.com/brianium/datastar.wow?tab=readme-ov-file#extending) pattern for datastar.wow. `update-nexus` is dropped in favor of a single `registry` function.
+
+datastar.wow.deacon now requires datastar.wow 1.0.0-RC3.wow1 or newer
+
 `ConnectionStore` protocol adds `list-keys` function.
 
 ### Added

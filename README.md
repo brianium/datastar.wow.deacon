@@ -92,9 +92,9 @@ a period of inactivity.
 (d*conn/list-keys store)
 ```
 
-### Installing the nexus interceptor
+### Installing the interceptor
 
-Use `datastar.wow.deacon/update-nexus` to create a function used in `:datastar.wow/update-nexus` that supports persisting connections in a declarative manner.
+Use `datastar.wow.deacon/registry` in `:datastar.wow/registries`.
 
 ``` clojure
 (require '[datastar.wow :as d*])
@@ -105,10 +105,16 @@ Use `datastar.wow.deacon/update-nexus` to create a function used in `:datastar.w
 
 (def middleware
   "A middleware that gives the power"
-  (d*/with-datastar hk/->sse-response {::d*/update-nexus (d*conn/update-nexus store)}))
+  (d*/with-datastar hk/->sse-response {::d*/registries [[d*conn/registry store]]}))
+  
+;;; OR without a predefined store
+
+(def middleware
+  "A middleware that gives the power"
+  (d*/with-datastar hk/->sse-response {::d*/registries [d*conn/registry]}))
 ```
 
-See [datastar.wow docs](https://github.com/brianium/datastar.wow?tab=readme-ov-file#extending) on extending via `:datastar.wow/update-nexus`.
+See [datastar.wow docs](https://github.com/brianium/datastar.wow?tab=readme-ov-file#extending) on extending via `:datastar.wow/registries`.
 
 Once the interceptor has been added, datstar.wow handlers can contain a `:datastar.wow.deacon/key` key in the response indicating the connection should be stored:
 
@@ -135,17 +141,17 @@ The `:datastar.wow.deacon/key` can contain any value that would be appropriate a
 
 ## Options
 
-The second argument to `datastar.wow.deacon/update-nexus` is an options map that can be used to customize behavior.
+The second argument to `datastar.wow.deacon/registry` is an options map that can be used to customize behavior.
 
-| key         | description                                                                                                                                                     |
-| ------------| --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `:id-fn`    | A function that is given the Nexus context and is expected to return a unique id for the session. IDs are used to scope connection keys to a particular context |
-| `:on-purge` | A function that is given the Nexus context and is called when a connection is purged in response to a `:datastar.wow/sse-closed` effect                         |
+| key         | description                                                                                                                                                        |
+| ------------| ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `:id-fn`    | A function that is given the dispatch context and is expected to return a unique id for the session. IDs are used to scope connection keys to a particular context |
+| `:on-purge` | A function that is given the dispatch context and is called when a connection is purged in response to a `:datastar.wow/sse-closed` effect                         |
 
 ### Note on ids and `:id-fn`
 
 Connection keys are always scoped to a unique session ID. This id defaults to `:datastar.wow.deacon/id`. However, it is useful to be able to store a connection key per session/user.
-The `:id-fn` is the way to support this. The Nexus context contains useful information (like the request) for constructing such a key.
+The `:id-fn` is the way to support this. The dispatch context contains useful information (like the request) for constructing such a key.
 
 ``` clojure
 (require '[datastar.wow.deacon :as d*conn])
@@ -157,7 +163,7 @@ The `:id-fn` is the way to support this. The Nexus context contains useful infor
   [{{:keys [request]} :system}]
   (:user-id request))
 
-(d*conn/update-nexus store {:id-fn user-id})
+(d*conn/registry store {:id-fn user-id})
 
 ;;; Fetching a connection with the default scope
 (d*conn/connection store [::d*conn/id ::counter])
