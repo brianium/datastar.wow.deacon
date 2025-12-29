@@ -49,10 +49,10 @@
   "A registry function for datastar.wow. The following (optional lol) options
    are supported:
 
-  | key         | description                                                                                                                 |
-  | ----------- | --------------------------------------------------------------------------------------------------------------------------- |
-  | `:id-fn`    | Function that receives context and returns a unique per-user id. A typical case might be returning a user id from session.  |
-  | `:on-purge` | Function that receives context and is called when a :datastar.wow/sse-closed effect is dispatched. Performs additional fx.  |"
+  | key         | description                                                                                                                |
+  | ----------- | -------------------------------------------------------------------------------------------------------------------------- |
+  | `:id-fn`    | Function that receives context and returns a unique per-user id. A typical case might be returning a user id from session. |
+  | `:on-purge` | Function (arity 2) called with context and the storage key. Called when a :datastar.wow/sse-closed effect is dispatched.   |"
   ([]
    (registry (store {:type :atom})))
   ([store]

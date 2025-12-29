@@ -146,7 +146,7 @@ The second argument to `datastar.wow.deacon/registry` is an options map that can
 | key         | description                                                                                                                                                        |
 | ------------| ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `:id-fn`    | A function that is given the dispatch context and is expected to return a unique id for the session. IDs are used to scope connection keys to a particular context |
-| `:on-purge` | A function that is given the dispatch context and is called when a connection is purged in response to a `:datastar.wow/sse-closed` effect                         |
+| `:on-purge` | Function (arity 2) called with context and the storage key. Called when a :datastar.wow/sse-closed effect is dispatched.                                           |
 
 ### Note on ids and `:id-fn`
 
