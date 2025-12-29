@@ -27,7 +27,7 @@
 (defn purge!
   "Remove a connection from storage and from future dispatches"
   [ctx store k on-purge]
-  (on-purge ctx)
+  (on-purge ctx k)
   (impl/purge! store k)
   (update ctx :dispatch-data dissoc :datastar.wow/connection))
 

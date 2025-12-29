@@ -141,14 +141,14 @@
          [::counter#counter {:data-text "$counter"}]
          [:div {:class "flex gap-x-2"}
           [:button {:class "bg-green-500 p-2 cursor-pointer disabled:bg-green-300"
-                    :data-on-click (d*/sse-put "/")
-                    :data-attr-disabled "$running"} "start timer"]
+                    :data-on:click (d*/sse-put "/")
+                    :data-attr:disabled "$running"} "start timer"]
           [:button {:class "bg-orange-500 p-2 cursor-pointer disabled:bg-orange-300"
-                    :data-on-click (d*/sse-post "/jump")
-                    :data-attr-disabled "!$running"} "add ten"]
+                    :data-on:click (d*/sse-post "/jump")
+                    :data-attr:disabled "!$running"} "add ten"]
           [:button {:class "bg-red-500 p-2 cursor-pointer disabled:bg-red-300"
-                    :data-on-click (d*/sse-delete "/")
-                    :data-attr-disabled "!$running"} "stop timer"]]]]]]]]))
+                    :data-on:click (d*/sse-delete "/")
+                    :data-attr:disabled "!$running"} "stop timer"]]]]]]]]))
 
 (defn index
   "Renders the initial page and handles app state management (reset and starting the timer). Loading

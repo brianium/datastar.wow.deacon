@@ -74,12 +74,17 @@ a period of inactivity.
 ;;; Create a Caffeine backed connection storage
 ;;; All keys other than :type are optional (defaults shown)
 (d*conn/store {:type :caffeine
-               :idle-ms (* 10 60 1000)
+               :duration-ms (* 10 60 1000)
 			   :maximum-size 10000})
 			   
 ;;; A caffeine backed store can be created with a :cache key overriding all other settings
 (d*conn/store {:type :caffeine
                :cache (create-a-caffeine-cache-somehow)})
+			   
+;;; The caffeine backed store can purge keys based on a fixed duration if a schedule is given (or true to use the default system scheduler)
+(d*conn/store {:type :caffeine
+               :duration-ms (* 10 60 1000)
+			   :scheduler true})
 			   
 ;;; Working with stores 
 
@@ -146,7 +151,7 @@ The second argument to `datastar.wow.deacon/registry` is an options map that can
 | key         | description                                                                                                                                                        |
 | ------------| ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `:id-fn`    | A function that is given the dispatch context and is expected to return a unique id for the session. IDs are used to scope connection keys to a particular context |
-| `:on-purge` | A function that is given the dispatch context and is called when a connection is purged in response to a `:datastar.wow/sse-closed` effect                         |
+| `:on-purge` | Function (arity 2) called with context and the storage key. Called when a :datastar.wow/sse-closed effect is dispatched.                                           |
 
 ### Note on ids and `:id-fn`
 

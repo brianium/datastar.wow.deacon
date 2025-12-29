@@ -1,5 +1,16 @@
 # Change Log
 
+## [1.6.0] - 2025-12-29
+
+### Breaking changes
+
+The arity of the `:on-purge` param used when creating a registry is now arity-2. It receives the context map AND the fully scoped key being purged. The `:idle-ms` parameter used for the `:caffeine` store
+has been renamed to `:duration-ms` so it makes sense for both expiration after access and after fixed durations.
+
+### Added
+
+The Caffeine backed store now supports fixed expiration using a scheduler.
+
 ## [1.5.0] - 2025-09-19
 
 ### Breaking changes

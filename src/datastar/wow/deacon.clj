@@ -23,10 +23,10 @@
   (throw (ex-info (str "Invalid connection store of type %s" type) opts)))
 
 (defn store!
-  "Store connection `sse-gen` identified by key `k`. Returns the connection that was stored"
-  [s k sse-gen]
-  (impl/store! s k sse-gen)
-  sse-gen)
+  "Store connection `conn` identified by key `k`. Returns the connection that was stored"
+  [s k conn]
+  (impl/store! s k conn)
+  conn)
 
 (defn connection
   "Fetch the connection identifed by key `k` from storage. Returns
@@ -49,10 +49,10 @@
   "A registry function for datastar.wow. The following (optional lol) options
    are supported:
 
-  | key         | description                                                                                                                 |
-  | ----------- | --------------------------------------------------------------------------------------------------------------------------- |
-  | `:id-fn`    | Function that receives context and returns a unique per-user id. A typical case might be returning a user id from session.  |
-  | `:on-purge` | Function that receives context and is called when a :datastar.wow/sse-closed effect is dispatched. Performs additional fx.  |"
+  | key         | description                                                                                                                |
+  | ----------- | -------------------------------------------------------------------------------------------------------------------------- |
+  | `:id-fn`    | Function that receives context and returns a unique per-user id. A typical case might be returning a user id from session. |
+  | `:on-purge` | Function (arity 2) called with context and the storage key. Called when a :datastar.wow/sse-closed effect is dispatched.   |"
   ([]
    (registry (store {:type :atom})))
   ([store]

@@ -61,9 +61,9 @@
                 (is (true? true))
                 (do (Thread/sleep sleep-ms)
                     (recur (+ time sleep-ms)))))))))
-    (testing "exceeding idle-ms"
+    (testing "exceeding duration-ms"
       (let [sleep-ms 50
-            s        (d*conn/store {:type :caffeine :idle-ms (- sleep-ms 10)})]
+            s        (d*conn/store {:type :caffeine :duration-ms (- sleep-ms 10)})]
         (d*conn/store! s :idle ::conn)
         (Thread/sleep sleep-ms)
         (is (nil? (d*conn/connection s :idle)))))))
@@ -113,15 +113,15 @@
                         [:datastar.wow/close-sse]]))
       (is (nil? (d*conn/connection store [::d*conn/id ::test-name]))))
     (testing "purging when using an id-fn"
-         (let [id-fn (fn [{{:keys [request]} :system}]
-                       (:session-id request))]
-           ((dispatch store [[:datastar.wow/send :arg1 :arg2]
-                             [:datastar.wow/sse-closed]] {:id-fn id-fn}))
-           (is (nil? (d*conn/connection store [::test-id ::test-name])))))
+      (let [id-fn (fn [{{:keys [request]} :system}]
+                    (:session-id request))]
+        ((dispatch store [[:datastar.wow/send :arg1 :arg2]
+                          [:datastar.wow/sse-closed]] {:id-fn id-fn}))
+        (is (nil? (d*conn/connection store [::test-id ::test-name])))))
     (testing "using an on-purge fn"
       (let [*purge   (atom nil)
-            on-purge (fn [{{:keys [request]} :system}]
-                       (reset! *purge (:session-id request)))]
+            on-purge (fn [{{:keys [request]} :system} k]
+                       (reset! *purge {:session-id (:session-id request) :key k}))]
         ((dispatch store [[:datastar.wow/send :arg1 :arg2]]))
         ((dispatch store [[:datastar.wow/sse-closed]] {:on-purge on-purge}))
-        (is (= ::test-id @*purge))))))
+        (is (= {:session-id ::test-id :key [:datastar.wow.deacon/id ::test-name]} @*purge))))))
