@@ -23,10 +23,10 @@
   (throw (ex-info (str "Invalid connection store of type %s" type) opts)))
 
 (defn store!
-  "Store connection `sse-gen` identified by key `k`. Returns the connection that was stored"
-  [s k sse-gen]
-  (impl/store! s k sse-gen)
-  sse-gen)
+  "Store connection `conn` identified by key `k`. Returns the connection that was stored"
+  [s k conn]
+  (impl/store! s k conn)
+  conn)
 
 (defn connection
   "Fetch the connection identifed by key `k` from storage. Returns

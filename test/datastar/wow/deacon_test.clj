@@ -61,9 +61,9 @@
                 (is (true? true))
                 (do (Thread/sleep sleep-ms)
                     (recur (+ time sleep-ms)))))))))
-    (testing "exceeding idle-ms"
+    (testing "exceeding duration-ms"
       (let [sleep-ms 50
-            s        (d*conn/store {:type :caffeine :idle-ms (- sleep-ms 10)})]
+            s        (d*conn/store {:type :caffeine :duration-ms (- sleep-ms 10)})]
         (d*conn/store! s :idle ::conn)
         (Thread/sleep sleep-ms)
         (is (nil? (d*conn/connection s :idle)))))))
