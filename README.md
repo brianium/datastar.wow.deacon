@@ -74,12 +74,17 @@ a period of inactivity.
 ;;; Create a Caffeine backed connection storage
 ;;; All keys other than :type are optional (defaults shown)
 (d*conn/store {:type :caffeine
-               :idle-ms (* 10 60 1000)
+               :duration-ms (* 10 60 1000)
 			   :maximum-size 10000})
 			   
 ;;; A caffeine backed store can be created with a :cache key overriding all other settings
 (d*conn/store {:type :caffeine
                :cache (create-a-caffeine-cache-somehow)})
+			   
+;;; The caffeine backed store can purge keys based on a fixed duration if a schedule is given (or true to use the default system scheduler)
+(d*conn/store {:type :caffeine
+               :duration-ms (* 10 60 1000)
+			   :scheduler true})
 			   
 ;;; Working with stores 
 
