@@ -1,4 +1,5 @@
 .clj-kondo/
 .cpcache/
 .lsp/
+target/
 .nrepl-port
