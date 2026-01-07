@@ -1,5 +1,11 @@
 # Change Log
 
+## [1.7.0] - 2026-01-07
+
+### Added
+
+`datastar.wow.deacon/store?` helper for checking if a value satisfies `ConnectionStore`.
+
 ## [1.6.0] - 2025-12-29
 
 ### Breaking changes

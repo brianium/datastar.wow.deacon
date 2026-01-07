@@ -28,6 +28,17 @@
       (d*conn/purge! s :purge)
       (is (nil? (d*conn/connection s :purge))))))
 
+(deftest store-predicate
+  (testing "recognizes valid stores"
+    (is (true? (d*conn/store? (d*conn/store {:type :atom :atom *conns}))))
+    (is (true? (d*conn/store? (d*conn/store {:type :caffeine})))))
+  (testing "rejects non-stores"
+    (are [x] (false? (d*conn/store? x))
+      nil
+      {}
+      []
+      ::not-a-store)))
+
 (deftest caffeine-store
   (let [s (d*conn/store {:type :caffeine})]
     (testing "storing a connection"

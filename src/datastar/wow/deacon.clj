@@ -28,6 +28,11 @@
   (impl/store! s k conn)
   conn)
 
+(defn store?
+  "Return true if `x` satisfies the ConnectionStore protocol."
+  [x]
+  (impl/store? x))
+
 (defn connection
   "Fetch the connection identifed by key `k` from storage. Returns
   nil if connection does not exist"
